@@ -17,8 +17,8 @@ logger.addHandler(ch)
 
 from prometheus_client import start_http_server, Gauge, Info
 
-URL = os.environ.get("ENDPOINT_URL", "http://43.205.243.151:7070/crypto/listings")
-DURATION = int(os.environ.get("QUERY_DURATION", 10))
+URL = os.environ.get("QUERY_URL", "http://43.205.243.151:7070/crypto/listings")
+DURATION = int(os.environ.get("QUERY_INTERVAL", 10))
 SYSTEM_VERSION = str(sys.version)
 EXPORTER_VERSION = "1.0"
 EXPORTER_PORT = int(os.environ.get("EXPORTER_PORT", 8000))
