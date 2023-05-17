@@ -4,3 +4,5 @@
 - To bring-up and take-down stack: `make up` or `make down`
 
 #### Screenshots from grafana
+![Screenshot](grafana.png)
+
