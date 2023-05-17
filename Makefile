@@ -12,5 +12,5 @@ up:
 	docker-compose up -d 
 	docker-compose ps
 
-off:
+down:
 	docker-compose down
