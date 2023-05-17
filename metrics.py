@@ -77,10 +77,10 @@ if __name__ == "__main__":
   logger.info(f"Starting exporter ...")
   start_http_server(EXPORTER_PORT)
   
-  i = Info('version_info', 'version details of exporter') 
+  i = Info('version', 'version details of exporter') 
   i.info({'app': EXPORTER_VERSION, 'system': SYSTEM_VERSION})
 
-  c = Counter('query_total', 'Total number of queries')
+  c = Counter('query_count', 'Total number of queries')
   g = Gauge('price_change', 'variation between queries', labelnames=['ID', 'Name'])
 
   while True:

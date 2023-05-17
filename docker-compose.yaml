@@ -1,0 +1,74 @@
+version: '3.8'
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+
+services:
+  crypto-exporter:
+    image: ashoka007/crypto-exporter:1.0
+    expose:
+      - 8000
+    ports:
+      - 0.0.0.0:8000:8000
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
+    ports:
+      - 0.0.0.0:9100:9100
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    expose:
+      - 9090
+    ports:
+      - 0.0.0.0:9090:9090
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    expose:
+      - 3000
+    ports:
+      - 0.0.0.0:3000:3000
+    restart: unless-stopped
+    volumes:
+      - ./datasource.yml:/etc/grafana/provisioning/datasources/prometheus_ds.yml
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitoring
+
+

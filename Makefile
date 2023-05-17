@@ -4,7 +4,10 @@ CONTAINER = "crypto-exporter"
 build:
 	docker build --platform linux/amd64 -t $(IMAGE_TAG) . && docker push $(IMAGE_TAG)
 
-run:
+crypto:
 	- docker rm -f $(CONTAINER)
-	docker run -d --name=$(CONTAINER) -p 9991:8000 -e QUERY_INTERVAL_SECONDS=5 $(IMAGE_TAG)
-	docker logs -f $(CONTAINER)
+	docker run -d --name=$(CONTAINER) -p 8000:8000 -e QUERY_INTERVAL_SECONDS=5 $(IMAGE_TAG)
+
+run:
+	docker-compose up -d 
+
