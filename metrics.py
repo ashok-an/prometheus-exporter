@@ -15,10 +15,10 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
-from prometheus_client import start_http_server, Gauge, Info
+from prometheus_client import start_http_server, Gauge, Info, Counter, Summary
 
 URL = os.environ.get("QUERY_URL", "http://43.205.243.151:7070/crypto/listings")
-DURATION = int(os.environ.get("QUERY_INTERVAL", 10))
+DURATION = int(os.environ.get("QUERY_INTERVAL_SECONDS", 10))
 SYSTEM_VERSION = str(sys.version)
 EXPORTER_VERSION = "1.0"
 EXPORTER_PORT = int(os.environ.get("EXPORTER_PORT", 8000))
@@ -56,34 +56,43 @@ def store_value(entry):
   deltas[k] = delta
 # end  
 
+query_time = Summary('query_processing_seconds', 'Time spent processing request')
+
+@query_time.time()
+def do_query(url=URL):
+    r = requests.get(url)
+
+    if r.status_code not in [200, 201]:
+      logger.error(f"Unable to query {url}: Response: {r.text}")
+      sys.exit(0)
+  
+    return r.json()
+# end
 
 if __name__ == "__main__":
-  logger.info(f" - EXPORTER_VERSION: {EXPORTER_VERSION}")
-  logger.info(f" - EXPORTER_PORT: {EXPORTER_PORT}")
-  logger.info(f" - QUERY_INTERVAL: {QUERY_INTERVAL}")
+  logger.info(f"(config) EXPORTER_VERSION: {EXPORTER_VERSION}")
+  logger.info(f"(config) EXPORTER_PORT: {EXPORTER_PORT}")
+  logger.info(f"(config) QUERY_INTERVAL_SECONDS: {DURATION}")
+  logger.info(f"(config) QUERY_URL: {URL}")
   logger.info(f"Starting exporter ...")
   start_http_server(EXPORTER_PORT)
   
   i = Info('version_info', 'version details of exporter') 
   i.info({'app': EXPORTER_VERSION, 'system': SYSTEM_VERSION})
 
+  c = Counter('query_total', 'Total number of queries')
   g = Gauge('price_change', 'variation between queries', labelnames=['ID', 'Name'])
 
   while True:
+    c.inc()
     logger.info(f"query: {URL} ...")
-    r = requests.get(URL)
-
-    if r.status_code not in [200, 201]:
-      logger.error(f"Unable to query {URL}: Response: {r.text}")
-      break
-
     logger.debug("+++ Storing values")
-    for entry in r.json():
+    for entry in do_query():
       store_value(entry)
 
     logger.debug("+++ Sorting based on deltas")
     temp = {k: v for k, v in sorted(deltas.items(), key=lambda item: item[1], reverse=True)}
-    logger.info(f"+++ {temp.keys()}")
+    logger.info(f"+++ top5 = {list(temp.keys())[:5]}")
 
     logger.debug("+++ Publishing metrics")
     for k, v in temp.items():
