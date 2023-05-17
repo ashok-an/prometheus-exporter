@@ -58,13 +58,16 @@ def store_value(entry):
 
 
 if __name__ == "__main__":
-  logger.info(f"Starting exporter on localhost:{EXPORTER_PORT} ...")
+  logger.info(f" - EXPORTER_VERSION: {EXPORTER_VERSION}")
+  logger.info(f" - EXPORTER_PORT: {EXPORTER_PORT}")
+  logger.info(f" - QUERY_INTERVAL: {QUERY_INTERVAL}")
+  logger.info(f"Starting exporter ...")
   start_http_server(EXPORTER_PORT)
   
-  i = Info('exporter', 'version details of exporter') 
-  i.info({'version': EXPORTER_VERSION, 'system': SYSTEM_VERSION})
+  i = Info('version_info', 'version details of exporter') 
+  i.info({'app': EXPORTER_VERSION, 'system': SYSTEM_VERSION})
 
-  g = Gauge('delta', 'variation between queries', labelnames=['ID', 'Name'])
+  g = Gauge('price_change', 'variation between queries', labelnames=['ID', 'Name'])
 
   while True:
     logger.info(f"query: {URL} ...")
